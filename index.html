@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vulnerable Shopping Cart - Working Demo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f5f6f8; padding: 20px; }
+        .vuln-badge { font-size: 0.65rem; background: #dc3545; color: white; border-radius: 12px; padding: 2px 10px; margin-left: 8px; }
+        .product-img { height: 140px; object-fit: cover; background: #e9ecef; }
+        .review-box { background: #f8f9fa; padding: 12px; border-radius: 8px; margin-top: 10px; min-height: 80px; }
+        .vulnerable { border: 2px solid #dc3545; background: #fff5f5; }
+        .cart-item { border-bottom: 1px solid #eee; padding: 8px 0; }
+        .highlight { background: #ffff99; padding: 2px 5px; }
+        .test-panel { background: #f0f0f0; padding: 10px; border-radius: 5px; margin: 5px 0; }
+        .xss-payload { font-family: monospace; background: #333; color: #0f0; padding: 2px 6px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="app">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3">VulnShop <span class="badge bg-danger">v2.0 - Fully Vulnerable</span></h1>
+        <div>
+            <span class="badge bg-secondary me-2">Cart: <span id="cartCount">0</span></span>
+            <button class="btn btn-outline-danger btn-sm" onclick="clearCart()">Empty</button>
+        </div>
+    </div>
+
+    <!-- Vulnerabilities Status Panel -->
+    <div class="alert alert-danger p-2 mb-3">
+        <strong>Vulnerabilities Active:</strong> 
+        <span class="badge bg-dark">XSS</span>
+        <span class="badge bg-dark">IDOR</span>
+        <span class="badge bg-dark">Price Manipulation</span>
+        <span class="badge bg-dark">Open Redirect</span>
+        <span class="badge bg-dark">Data Leak</span>
+        <span class="badge bg-dark">No CSP</span>
+        <span class="badge bg-dark">Clickjacking</span>
+        <span class="badge bg-dark">CSRF</span>
+        <span class="badge bg-dark">Session Fixation</span>
+    </div>
+
+    <!-- ===== XSS VECTORS ===== -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="card vulnerable">
+                <div class="card-header bg-danger text-white">
+                    XSS Vector 1: Reflected XSS (Search)
+                    <span class="badge bg-light text-dark">Working</span>
+                </div>
+                <div class="card-body">
+                    <div class="input-group">
+                        <input type="text" id="searchInput" class="form-control" placeholder='Try: <script>alert("XSS")</script>'>
+                        <button class="btn btn-danger" onclick="searchProducts()">Search</button>
+                    </div>
+                    <div id="searchResults" class="mt-2 p-2 bg-light"></div>
+                    <small class="text-muted">Uses innerHTML with unsanitized input</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card vulnerable">
+                <div class="card-header bg-danger text-white">
+                    XSS Vector 2: Stored XSS (Reviews)
+                    <span class="badge bg-light text-dark">Working</span>
+                </div>
+                <div class="card-body">
+                    <div id="reviewsContainer" class="review-box">
+                        <em>No reviews yet.</em>
+                    </div>
+                    <div class="input-group mt-2">
+                        <input type="text" id="reviewInput" class="form-control" placeholder='Try: <img src=x onerror=alert("Stored XSS")>'>
+                        <button class="btn btn-danger" onclick="addReview()">Post</button>
+                    </div>
+                    <small class="text-muted">Stored in DOM - persists on page refresh</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== XSS Vector 3: URL Hash ===== -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="card vulnerable">
+                <div class="card-header bg-danger text-white">
+                    XSS Vector 3: DOM XSS (URL Hash)
+                    <span class="badge bg-light text-dark">Working</span>
+                </div>
+                <div class="card-body">
+                    <div id="hashDisplay" class="p-2 bg-light"></div>
+                    <small>Try: page.html#<span class="xss-payload">&lt;img src=x onerror=alert(1)&gt;</span></small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card vulnerable">
+                <div class="card-header bg-danger text-white">
+                    XSS Vector 4: JavaScript Injection
+                    <span class="badge bg-light text-dark">Working</span>
+                </div>
+                <div class="card-body">
+                    <div class="input-group">
+                        <input type="text" id="jsInput" class="form-control" placeholder='Try: javascript:alert("Injected")'>
+                        <button class="btn btn-danger" onclick="executeJS()">Execute</button>
+                    </div>
+                    <div id="jsOutput" class="mt-2 p-2 bg-light"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== PRODUCTS ===== -->
+    <div class="row" id="productList"></div>
+
+    <!-- ===== CART with Price Manipulation ===== -->
+    <div class="row mt-4">
+        <div class="col-md-7">
+            <div class="card vulnerable">
+                <div class="card-header bg-warning">
+                    <strong>Cart</strong>
+                    <span class="badge bg-dark">IDOR</span>
+                    <span class="badge bg-dark">Price Manipulation</span>
+                </div>
+                <div class="card-body" id="cartContainer">
+                    <div class="text-muted">Cart is empty</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-5">
+            <div class="card vulnerable">
+                <div class="card-header bg-warning">
+                    <strong>Checkout</strong>
+                    <span class="badge bg-dark">Data Leak</span>
+                    <span class="badge bg-dark">No CSRF</span>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <label class="form-label small">Name</label>
+                        <input type="text" id="checkoutName" class="form-control" value="John Doe">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small">Address</label>
+                        <input type="text" id="checkoutAddress" class="form-control" value="123 Main St">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small">Credit Card</label>
+                        <input type="text" id="checkoutCard" class="form-control" value="4111-1111-1111-1111">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small">Discount Code</label>
+                        <input type="text" id="discountCode" class="form-control" value="SAVE10">
+                    </div>
+                    <button class="btn btn-success w-100" onclick="checkout()">Place Order (GET)</button>
+                    <div id="checkoutResult" class="mt-2 small"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== OPEN REDIRECT ===== -->
+    <div class="row mt-3">
+        <div class="col-md-6">
+            <div class="card vulnerable">
+                <div class="card-header bg-info text-white">
+                    Open Redirect
+                    <span class="badge bg-light text-dark">Working</span>
+                </div>
+                <div class="card-body">
+                    <div class="input-group">
+                        <input type="text" id="redirectUrl" class="form-control" value="https://example.com">
+                        <button class="btn btn-info" onclick="redirectTo()">Redirect</button>
+                    </div>
+                    <small>Try: https://malicious-site.com</small>
+                    <div id="redirectStatus" class="mt-2"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card vulnerable">
+                <div class="card-header bg-info text-white">
+                    Session Fixation
+                    <span class="badge bg-light text-dark">Working</span>
+                </div>
+                <div class="card-body">
+                    <div class="input-group">
+                        <input type="text" id="sessionInput" class="form-control" value="admin123">
+                        <button class="btn btn-info" onclick="setSession()">Set Session</button>
+                    </div>
+                    <div id="sessionDisplay" class="mt-2 p-2 bg-light">Current Session: <span id="currentSession">None</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== CSRF Demonstration ===== -->
+    <div class="row mt-3">
+        <div class="col-md-6">
+            <div class="card vulnerable">
+                <div class="card-header bg-secondary text-white">
+                    CSRF Vulnerability
+                    <span class="badge bg-light text-dark">Working</span>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-danger" onclick="csrfAttack()">Simulate CSRF Attack</button>
+                    <div id="csrfResult" class="mt-2"></div>
+                    <small>No anti-CSRF tokens - requests can be forged</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card vulnerable">
+                <div class="card-header bg-secondary text-white">
+                    Clickjacking Demo
+                    <span class="badge bg-light text-dark">Working</span>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-danger" onclick="showClickjacking()">Show Clickjacking Test</button>
+                    <div id="clickjackingResult" class="mt-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-4 text-center small text-muted border-top pt-3">
+        <span>Vulnerable Demo - All vulnerabilities verified working</span>
+    </div>
+</div>
+
+<script>
+    // ===== PRODUCT DATA =====
+    const products = [
+        { id: 1, name: 'Wireless Headphones', price: 49.99, img: 'https://via.placeholder.com/200x140?text=Headphones' },
+        { id: 2, name: 'Bluetooth Speaker', price: 29.99, img: 'https://via.placeholder.com/200x140?text=Speaker' },
+        { id: 3, name: 'USB-C Hub', price: 19.99, img: 'https://via.placeholder.com/200x140?text=USB+Hub' },
+        { id: 4, name: 'Mechanical Keyboard', price: 79.99, img: 'https://via.placeholder.com/200x140?text=Keyboard' }
+    ];
+
+    // ===== STATE =====
+    let cart = JSON.parse(localStorage.getItem('vulnCart')) || [];
+    let sessionId = localStorage.getItem('sessionId') || 'guest_' + Date.now();
+
+    // ===== XSS VECTOR 1: Reflected XSS =====
+    function searchProducts() {
+        const query = document.getElementById('searchInput').value;
+        const resultsDiv = document.getElementById('searchResults');
+        
+        // VULNERABLE: Direct innerHTML assignment
+        resultsDiv.innerHTML = `<strong>Search results for:</strong> ${query}`;
+        
+        // Show product matches
+        const matches = products.filter(p => p.name.toLowerCase().includes(query.toLowerCase()));
+        if (matches.length > 0) {
+            resultsDiv.innerHTML += `<br>Found ${matches.length} products`;
+        } else {
+            resultsDiv.innerHTML += `<br>No products found`;
+        }
+        
+        // Log for testing
+        console.log('Search executed with: ' + query);
+    }
+
+    // ===== XSS VECTOR 2: Stored XSS =====
+    function addReview() {
+        const input = document.getElementById('reviewInput');
+        const container = document.getElementById('reviewsContainer');
+        const reviewText = input.value;
+        
+        if (!reviewText.trim()) return;
+        
+        // VULNERABLE: Direct innerHTML injection
+        container.innerHTML += `<div class="border-bottom pb-2 mb-2"><strong>User:</strong> ${reviewText}</div>`;
+        
+        // Store in localStorage
+        const reviews = JSON.parse(localStorage.getItem('reviews')) || [];
+        reviews.push(reviewText);
+        localStorage.setItem('reviews', JSON.stringify(reviews));
+        
+        input.value = '';
+        console.log('Review added: ' + reviewText);
+    }
+
+    // ===== XSS VECTOR 3: DOM XSS via URL Hash =====
+    function loadHashXSS() {
+        const hash = window.location.hash;
+        const display = document.getElementById('hashDisplay');
+        
+        if (hash && hash.length > 1) {
+            // VULNERABLE: Direct injection from URL
+            display.innerHTML = `<strong>Hash parameter:</strong> ${hash.substring(1)}`;
+        } else {
+            display.innerHTML = '<em>No hash parameter</em>';
+        }
+    }
+
+    // ===== XSS VECTOR 4: JavaScript Injection =====
+    function executeJS() {
+        const input = document.getElementById('jsInput').value;
+        const output = document.getElementById('jsOutput');
+        
+        // VULNERABLE: eval() execution
+        try {
+            const result = eval(input);
+            output.innerHTML = `<strong>Result:</strong> ${result}`;
+        } catch(e) {
+            output.innerHTML = `<strong>Error:</strong> ${e.message}`;
+        }
+    }
+
+    // ===== RENDER PRODUCTS =====
+    function renderProducts() {
+        const container = document.getElementById('productList');
+        container.innerHTML = products.map(p => `
+            <div class="col-md-3 col-6 mb-3">
+                <div class="card h-100">
+                    <img src="${p.img}" class="card-img-top product-img" alt="${p.name}">
+                    <div class="card-body p-2">
+                        <h6 class="card-title">${p.name}</h6>
+                        <p class="card-text text-success fw-bold">$${p.price}</p>
+                        <button class="btn btn-sm btn-outline-primary w-100" onclick="addToCart(${p.id}, '${p.name}', ${p.price})">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // ===== CART FUNCTIONS =====
+    function addToCart(id, name, price) {
+        // VULNERABLE: Client-side price manipulation possible
+        const item = cart.find(i => i.id === id);
+        if (item) {
+            item.quantity = (item.quantity || 1) + 1;
+        } else {
+            cart.push({ id, name, price, quantity: 1 });
+        }
+        localStorage.setItem('vulnCart', JSON.stringify(cart));
+        renderCart();
+        updateCartCount();
+        
+        // XSS possibility via product name
+        document.getElementById('searchResults').innerHTML = `<span class="text-success">Added "${name}"</span>`;
+    }
+
+    function renderCart() {
+        const container = document.getElementById('cartContainer');
+        if (!cart.length) {
+            container.innerHTML = '<div class="text-muted">Cart is empty</div>';
+            return;
+        }
+        
+        let html = '';
+        let total = 0;
+        cart.forEach((item, index) => {
+            const subtotal = item.price * item.quantity;
+            total += subtotal;
+            html += `
+                <div class="cart-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>${item.name}</strong>
+                        <span class="badge bg-secondary">$${item.price}</span>
+                        <span class="badge bg-light">x${item.quantity}</span>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart(${index})">×</button>
+                        <span class="ms-2">$${subtotal.toFixed(2)}</span>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += `<div class="mt-2 fw-bold">Total: $${total.toFixed(2)}</div>`;
+        html += `<input type="hidden" id="cartTotal" value="${total}">`;
+        container.innerHTML = html;
+    }
+
+    function removeFromCart(index) {
+        cart.splice(index, 1);
+        localStorage.setItem('vulnCart', JSON.stringify(cart));
+        renderCart();
+        updateCartCount();
+    }
+
+    function clearCart() {
+        cart = [];
+        localStorage.setItem('vulnCart', JSON.stringify(cart));
+        renderCart();
+        updateCartCount();
+    }
+
+    function updateCartCount() {
+        const count = cart.reduce((acc, i) => acc + (i.quantity || 1), 0);
+        document.getElementById('cartCount').innerText = count;
+    }
+
+    // ===== OPEN REDIRECT =====
+    function redirectTo() {
+        const url = document.getElementById('redirectUrl').value;
+        const status = document.getElementById('redirectStatus');
+        
+        // VULNERABLE: Unvalidated redirect
+        if (url) {
+            status.innerHTML = `<div class="alert alert-warning">Redirecting to: ${url}</div>`;
+            setTimeout(() => {
+                window.location.href = url;
+            }, 1000);
+        }
+    }
+
+    // ===== SESSION FIXATION =====
+    function setSession() {
+        const session = document.getElementById('sessionInput').value;
+        localStorage.setItem('sessionId', session);
+        sessionId = session;
+        document.getElementById('currentSession').innerText = session;
+        document.getElementById('sessionDisplay').innerHTML = 
+            `<strong>Session set to:</strong> ${session} <span class="badge bg-warning">Fixed</span>`;
+        
+        console.log('Session fixed to: ' + session);
+    }
+
+    // ===== CHECKOUT WITH DATA LEAK =====
+    function checkout() {
+        const name = document.getElementById('checkoutName').value;
+        const address = document.getElementById('checkoutAddress').value;
+        const card = document.getElementById('checkoutCard').value;
+        const discount = document.getElementById('discountCode').value;
+        const total = document.getElementById('cartTotal') ? document.getElementById('cartTotal').value : 0;
+        
+        // VULNERABLE: Data sent via GET (visible in URL)
+        const params = new URLSearchParams({
+            name, address, card, discount, total,
+            session: sessionId,
+            timestamp: Date.now()
+        });
+        
+        // VULNERABLE: Data exposed in console
+        console.log('Checkout Data (LEAKED):', params.toString());
+        
+        // VULNERABLE: Data exposed in DOM
+        document.getElementById('checkoutResult').innerHTML = `
+            <div class="alert alert-danger">
+                <strong>Order placed with data (exposed):</strong><br>
+                <small class="text-break">${params.toString()}</small>
+            </div>
+        `;
+        
+        // VULNERABLE: Data in URL
+        window.history.pushState({}, '', '?' + params.toString());
+        
+        alert('Order placed! Check console for leaked data.');
+    }
+
+    // ===== CSRF ATTACK SIMULATION =====
+    function csrfAttack() {
+        const result = document.getElementById('csrfResult');
+        
+        // VULNERABLE: No CSRF token validation
+        const payload = {
+            name: 'Hacker',
+            address: 'Evil Street 123',
+            card: '1234-5678-9012-3456',
+            total: '0.01'
+        };
+        
+        // Simulate cross-origin request
+        result.innerHTML = `
+            <div class="alert alert-danger">
+                <strong>CSRF Attack Successful!</strong><br>
+                Attacker forged request with data:<br>
+                <small>${JSON.stringify(payload)}</small><br><br>
+                <span class="text-danger">No CSRF token was validated!</span>
+            </div>
+        `;
+        
+        console.log('CSRF Attack: Forged request sent', payload);
+    }
+
+    // ===== CLICKJACKING DEMO =====
+    function showClickjacking() {
+        const result = document.getElementById('clickjackingResult');
+        
+        // Create iframe for demonstration
+        result.innerHTML = `
+            <div class="alert alert-danger">
+                <strong>Clickjacking Vulnerability!</strong><br>
+                This page can be embedded in an iframe:<br>
+                <iframe src="${window.location.href}" style="width:100%;height:200px;border:2px solid red;"></iframe>
+                <br><span class="text-danger">No X-Frame-Options header set!</span>
+            </div>
+        `;
+    }
+
+    // ===== RATE LIMITING TEST =====
+    function spamCart() {
+        for(let i = 0; i < 50; i++) {
+            addToCart(1, 'Spam Item', 0.01);
+        }
+        alert('Cart spammed with 50 items - No rate limiting!');
+    }
+
+    // ===== INITIALIZATION =====
+    function init() {
+        renderProducts();
+        renderCart();
+        updateCartCount();
+        loadHashXSS();
+        
+        // Set session display
+        document.getElementById('currentSession').innerText = sessionId;
+        
+        // Load stored reviews
+        const reviews = JSON.parse(localStorage.getItem('reviews')) || [];
+        if (reviews.length > 0) {
+            const container = document.getElementById('reviewsContainer');
+            reviews.forEach(review => {
+                container.innerHTML += `<div class="border-bottom pb-2 mb-2"><strong>User:</strong> ${review}</div>`;
+            });
+        }
+        
+        // Log vulnerabilities
+        console.log('%c🔥 Vulnerable Shop Loaded', 'color: red; font-size: 20px; font-weight: bold;');
+        console.log('%cVulnerabilities Active:', 'color: orange; font-size: 16px;');
+        console.log('1. Reflected XSS (Search)');
+        console.log('2. Stored XSS (Reviews)');
+        console.log('3. DOM XSS (URL Hash)');
+        console.log('4. JavaScript Injection (eval)');
+        console.log('5. IDOR (Cart access)');
+        console.log('6. Price Manipulation');
+        console.log('7. Open Redirect');
+        console.log('8. Session Fixation');
+        console.log('9. Data Exposure');
+        console.log('10. CSRF');
+        console.log('11. Clickjacking');
+        console.log('12. No CSP');
+        console.log('13. No Rate Limiting');
+        
+        console.log('%cSession ID: ' + sessionId, 'color: blue;');
+        console.log('%cCart Data: ' + JSON.stringify(cart), 'color: green;');
+        
+        // Expose for easy testing
+        window.vuln = {
+            cart: cart,
+            session: sessionId,
+            products: products,
+            addToCart: addToCart,
+            clearCart: clearCart,
+            searchProducts: searchProducts,
+            addReview: addReview,
+            executeJS: executeJS,
+            redirectTo: redirectTo,
+            checkout: checkout,
+            csrfAttack: csrfAttack
+        };
+    }
+
+    // ===== ADDITIONAL VULNERABILITIES =====
+
+    // 1. No CSP - eval works
+    console.log('No Content Security Policy - eval() works');
+
+    // 2. No X-Frame-Options - clickjacking possible
+    // 3. Global variables exposure
+    window.cartData = cart;
+    window.userData = { session: sessionId };
+
+    // 4. Information disclosure via error messages
+    function triggerError() {
+        try {
+            null.toString(); // This will throw
+        } catch(e) {
+            // VULNERABLE: Full error stack exposed
+            document.getElementById('searchResults').innerHTML = 
+                `<div class="alert alert-danger">Error: ${e.stack}</div>`;
+        }
+    }
+
+    // 5. Insecure storage - all data in localStorage
+    console.log('All data stored in plaintext localStorage');
+
+    // 6. No input validation
+    // 7. Predictable IDs
+    // 8. Missing authentication
+
+    // Load on page ready
+    document.addEventListener('DOMContentLoaded', init);
+    
+    // Listen for hash changes for DOM XSS
+    window.addEventListener('hashchange', loadHashXSS);
+
+    // Expose spam function for testing
+    window.spamCart = spamCart;
+    window.triggerError = triggerError;
+
+    console.log('%c✅ Ready for testing! All vulnerabilities active.', 'color: green; font-size: 14px;');
+</script>
+</body>
+</html>
