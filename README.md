@@ -4,8 +4,6 @@ A deliberately insecure e-commerce application designed for cybersecurity educat
 
 ## Disclaimer
 
-**WARNING: This application contains serious security vulnerabilities and is intended for educational purposes only.**
-
 - Do not deploy this application on any production system or public network
 - Do not use this application against any system without explicit written authorization
 - Use only in isolated, controlled environments for learning and testing
