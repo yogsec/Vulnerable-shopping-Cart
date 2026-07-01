@@ -3,223 +3,508 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vulnerable Shopping Cart - Working Demo</title>
+    <title>Vulnerable Shopping Cart</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
-        body { background: #f5f6f8; padding: 20px; }
-        .vuln-badge { font-size: 0.65rem; background: #dc3545; color: white; border-radius: 12px; padding: 2px 10px; margin-left: 8px; }
-        .product-img { height: 140px; object-fit: cover; background: #e9ecef; }
-        .review-box { background: #f8f9fa; padding: 12px; border-radius: 8px; margin-top: 10px; min-height: 80px; }
-        .vulnerable { border: 2px solid #dc3545; background: #fff5f5; }
-        .cart-item { border-bottom: 1px solid #eee; padding: 8px 0; }
-        .highlight { background: #ffff99; padding: 2px 5px; }
-        .test-panel { background: #f0f0f0; padding: 10px; border-radius: 5px; margin: 5px 0; }
-        .xss-payload { font-family: monospace; background: #333; color: #0f0; padding: 2px 6px; border-radius: 3px; }
+        body { 
+            background: #f0f2f5; 
+            padding: 30px 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        .container {
+            max-width: 1200px;
+        }
+        
+        .product-img {
+            height: 180px;
+            object-fit: cover;
+            background: #f8f9fa;
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .cart-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        
+        .cart-table thead {
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .cart-table thead th {
+            padding: 15px 20px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #495057;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: none;
+        }
+        
+        .cart-table tbody td {
+            padding: 20px;
+            vertical-align: middle;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .cart-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .product-name {
+            font-weight: 500;
+            color: #212529;
+            font-size: 15px;
+        }
+        
+        .product-price {
+            font-weight: 600;
+            color: #212529;
+            font-size: 16px;
+        }
+        
+        .quantity-control {
+            display: inline-flex;
+            align-items: center;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            overflow: hidden;
+            background: white;
+        }
+        
+        .quantity-control button {
+            background: none;
+            border: none;
+            padding: 6px 12px;
+            color: #495057;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .quantity-control button:hover {
+            background: #f8f9fa;
+        }
+        
+        .quantity-control input {
+            width: 50px;
+            border: none;
+            border-left: 1px solid #dee2e6;
+            border-right: 1px solid #dee2e6;
+            text-align: center;
+            padding: 6px 0;
+            font-size: 14px;
+            font-weight: 500;
+            background: white;
+        }
+        
+        .quantity-control input:focus {
+            outline: none;
+        }
+        
+        .remove-btn {
+            background: none;
+            border: none;
+            color: #dc3545;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 5px 10px;
+            transition: color 0.2s;
+        }
+        
+        .remove-btn:hover {
+            color: #c82333;
+        }
+        
+        .cart-summary {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        
+        .cart-summary h5 {
+            font-weight: 600;
+            color: #212529;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        
+        .coupon-section {
+            margin-bottom: 25px;
+        }
+        
+        .coupon-section label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #495057;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .coupon-input-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .coupon-input-group input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        
+        .coupon-input-group input:focus {
+            border-color: #0d6efd;
+            outline: none;
+        }
+        
+        .btn-apply-coupon {
+            padding: 10px 25px;
+            background: #0d6efd;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        
+        .btn-apply-coupon:hover {
+            background: #0b5ed7;
+        }
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            font-size: 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .summary-row:last-of-type {
+            border-bottom: none;
+        }
+        
+        .summary-row.total {
+            border-top: 2px solid #212529;
+            margin-top: 5px;
+            padding-top: 18px;
+            font-weight: 700;
+            font-size: 18px;
+        }
+        
+        .summary-row .label {
+            color: #495057;
+        }
+        
+        .summary-row .value {
+            color: #212529;
+            font-weight: 600;
+        }
+        
+        .summary-row.total .value {
+            color: #0d6efd;
+            font-size: 20px;
+        }
+        
+        .btn-checkout {
+            width: 100%;
+            padding: 14px;
+            background: #0d6efd;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 20px;
+        }
+        
+        .btn-checkout:hover {
+            background: #0b5ed7;
+        }
+        
+        .vuln-badge {
+            font-size: 0.6rem;
+            background: #dc3545;
+            color: white;
+            border-radius: 12px;
+            padding: 2px 10px;
+            margin-left: 8px;
+            display: inline-block;
+        }
+        
+        .vulnerable-section {
+            border: 2px solid #dc3545;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background: #fff5f5;
+            position: relative;
+        }
+        
+        .vulnerable-section::before {
+            content: "VULNERABLE";
+            position: absolute;
+            top: -10px;
+            right: 15px;
+            background: #dc3545;
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 12px;
+            border-radius: 10px;
+            letter-spacing: 0.5px;
+        }
+        
+        .vulnerable-badge {
+            background: #dc3545;
+            color: white;
+            font-size: 10px;
+            padding: 2px 10px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-left: 8px;
+        }
+        
+        .business-card {
+            border: 2px solid #fd7e14;
+            border-radius: 10px;
+            background: #fff8f0;
+        }
+        
+        .business-card .card-header {
+            background: #fd7e14;
+            color: white;
+            border-radius: 8px 8px 0 0;
+            padding: 12px 20px;
+        }
+        
+        .business-card .card-header small {
+            font-weight: 500;
+        }
+        
+        .badge-business {
+            background: #fd7e14;
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .cart-table thead {
+                display: none;
+            }
+            
+            .cart-table tbody td {
+                display: block;
+                padding: 12px 15px;
+                border: none;
+            }
+            
+            .cart-table tbody tr {
+                display: block;
+                border-bottom: 2px solid #dee2e6;
+                padding: 10px 0;
+            }
+            
+            .product-img {
+                height: 120px;
+            }
+            
+            .cart-summary {
+                margin-top: 20px;
+            }
+        }
     </style>
 </head>
 <body>
 
-<div class="container" id="app">
+<div class="container">
 
     <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="h3">VulnShop <span class="badge bg-danger">v2.0 - Fully Vulnerable</span></h1>
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <span class="badge bg-secondary me-2">Cart: <span id="cartCount">0</span></span>
-            <button class="btn btn-outline-danger btn-sm" onclick="clearCart()">Empty</button>
+            <h2 class="fw-bold mb-0" style="color: #212529;">Shopping Cart</h2>
+            <small class="text-muted">Vulnerable Demo - For Educational Purposes Only</small>
+        </div>
+        <div>
+            <span class="badge bg-secondary me-2">Items: <span id="cartCount">0</span></span>
+            <button class="btn btn-outline-danger btn-sm" onclick="clearCart()">
+                <i class="bi bi-trash"></i> Empty Cart
+            </button>
         </div>
     </div>
 
-    <!-- Vulnerabilities Status Panel -->
-    <div class="alert alert-danger p-2 mb-3">
-        <strong>Vulnerabilities Active:</strong> 
-        <span class="badge bg-dark">XSS</span>
+    <!-- Vulnerabilities Alert -->
+    <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+        <strong><i class="bi bi-exclamation-triangle-fill"></i> Vulnerabilities Active:</strong>
+        <span class="badge bg-dark">DOM XSS</span>
         <span class="badge bg-dark">IDOR</span>
         <span class="badge bg-dark">Price Manipulation</span>
         <span class="badge bg-dark">Open Redirect</span>
         <span class="badge bg-dark">Data Leak</span>
-        <span class="badge bg-dark">No CSP</span>
-        <span class="badge bg-dark">Clickjacking</span>
-        <span class="badge bg-dark">CSRF</span>
         <span class="badge bg-dark">Session Fixation</span>
+        <span class="badge bg-dark">CSRF</span>
+        <span class="badge bg-dark">Clickjacking</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 
-    <!-- ===== XSS VECTORS ===== -->
-    <div class="row mb-3">
-        <div class="col-md-6">
-            <div class="card vulnerable">
-                <div class="card-header bg-danger text-white">
-                    XSS Vector 1: Reflected XSS (Search)
-                    <span class="badge bg-light text-dark">Working</span>
-                </div>
-                <div class="card-body">
-                    <div class="input-group">
-                        <input type="text" id="searchInput" class="form-control" placeholder='Try: <script>alert("XSS")</script>'>
-                        <button class="btn btn-danger" onclick="searchProducts()">Search</button>
-                    </div>
-                    <div id="searchResults" class="mt-2 p-2 bg-light"></div>
-                    <small class="text-muted">Uses innerHTML with unsanitized input</small>
-                </div>
+    <!-- DOM XSS Display -->
+    <div id="domXssDisplay" class="mb-3 p-2 bg-light border rounded" style="display: none;"></div>
+
+    <div class="row">
+        <!-- Main Cart Table -->
+        <div class="col-lg-8">
+            <div class="cart-table">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 40%;">Product</th>
+                            <th style="width: 20%;">Price</th>
+                            <th style="width: 25%;">Quantity</th>
+                            <th style="width: 15%;" class="text-end">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cartBody">
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">
+                                <i class="bi bi-cart3" style="font-size: 30px; display: block; margin-bottom: 10px;"></i>
+                                Your cart is empty
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Products Section -->
+            <div class="mt-4">
+                <h6 class="fw-bold mb-3">Featured Products</h6>
+                <div class="row" id="productList"></div>
             </div>
         </div>
-        <div class="col-md-6">
-            <div class="card vulnerable">
-                <div class="card-header bg-danger text-white">
-                    XSS Vector 2: Stored XSS (Reviews)
-                    <span class="badge bg-light text-dark">Working</span>
-                </div>
-                <div class="card-body">
-                    <div id="reviewsContainer" class="review-box">
-                        <em>No reviews yet.</em>
+
+        <!-- Cart Summary -->
+        <div class="col-lg-4">
+            <div class="cart-summary">
+                <h5>Cart Totals</h5>
+                
+                <!-- Coupon Section -->
+                <div class="coupon-section">
+                    <label for="couponInput">Promotion Code</label>
+                    <div class="coupon-input-group">
+                        <input type="text" id="couponInput" class="form-control" placeholder="Enter coupon code" value="SAVE20">
+                        <button class="btn-apply-coupon" onclick="applyCouponReuse()">Apply Coupon</button>
                     </div>
-                    <div class="input-group mt-2">
-                        <input type="text" id="reviewInput" class="form-control" placeholder='Try: <img src=x onerror=alert("Stored XSS")>'>
-                        <button class="btn btn-danger" onclick="addReview()">Post</button>
-                    </div>
-                    <small class="text-muted">Stored in DOM - persists on page refresh</small>
+                    <div id="couponStatus" class="mt-1 small text-danger"></div>
                 </div>
+
+                <!-- Summary Rows -->
+                <div class="summary-row">
+                    <span class="label">Subtotal</span>
+                    <span class="value">$<span id="cartSubtotal">0.00</span></span>
+                </div>
+                
+                <div class="summary-row">
+                    <span class="label">Shipping</span>
+                    <span class="value">$<span id="cartShipping">10.00</span></span>
+                </div>
+                
+                <!-- Gift Card Section -->
+                <div class="summary-row" style="border-bottom: none; padding-bottom: 5px;">
+                    <span class="label" style="font-size: 13px; color: #6c757d;">
+                        Gift Card Balance: $<span id="giftCardBalanceDisplay">100.00</span>
+                    </span>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-danger btn-sm" onclick="manipulateGiftCard(99999)" style="font-size: 11px;">Hack</button>
+                    </div>
+                </div>
+                
+                <div class="coupon-section mt-2" style="margin-bottom: 10px;">
+                    <div class="coupon-input-group" style="gap: 5px;">
+                        <input type="text" id="giftCardAmount" class="form-control form-control-sm" placeholder="Amount" value="10" style="width: 80px; flex: none;">
+                        <button class="btn btn-sm btn-outline-success" onclick="applyGiftCard()" style="font-size: 12px; padding: 5px 12px;">Apply Gift Card</button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('freeShippingCheck').click(); toggleFreeShipping();" style="font-size: 12px; padding: 5px 12px;">
+                            <i class="bi bi-truck"></i>
+                        </button>
+                    </div>
+                    <div id="giftCardStatus" class="mt-1 small"></div>
+                </div>
+
+                <!-- Free Shipping Toggle (Hidden but functional) -->
+                <input type="checkbox" id="freeShippingCheck" onchange="toggleFreeShipping()" style="display: none;">
+                <div id="shippingDisplay" class="small text-muted mb-2"></div>
+
+                <!-- Loyalty Points -->
+                <div class="d-flex justify-content-between align-items-center mb-2" style="border-bottom: 1px solid #e9ecef; padding-bottom: 8px;">
+                    <span style="font-size: 13px; color: #6c757d;">
+                        Loyalty Points: <strong id="loyaltyPointsDisplay">0</strong>
+                    </span>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-danger btn-sm" onclick="manipulatePoints(999999)" style="font-size: 11px;">Hack</button>
+                        <button class="btn btn-outline-success btn-sm" onclick="redeemPoints()" style="font-size: 11px;">Redeem</button>
+                    </div>
+                </div>
+
+                <!-- Total -->
+                <div class="summary-row total">
+                    <span class="label">Total</span>
+                    <span class="value">$<span id="cartTotalDisplay">0.00</span></span>
+                </div>
+
+                <!-- Hidden cart total -->
+                <input type="hidden" id="cartTotal" value="0">
+
+                <!-- Checkout Button -->
+                <button class="btn-checkout" onclick="checkout()">
+                    <i class="bi bi-lock"></i> PROCEED TO CHECKOUT
+                </button>
+                <div id="checkoutResult" class="mt-2 small"></div>
             </div>
         </div>
     </div>
 
-    <!-- ===== XSS Vector 3: URL Hash ===== -->
-    <div class="row mb-3">
-        <div class="col-md-6">
-            <div class="card vulnerable">
-                <div class="card-header bg-danger text-white">
-                    XSS Vector 3: DOM XSS (URL Hash)
-                    <span class="badge bg-light text-dark">Working</span>
-                </div>
-                <div class="card-body">
-                    <div id="hashDisplay" class="p-2 bg-light"></div>
-                    <small>Try: page.html#<span class="xss-payload">&lt;img src=x onerror=alert(1)&gt;</span></small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card vulnerable">
-                <div class="card-header bg-danger text-white">
-                    XSS Vector 4: JavaScript Injection
-                    <span class="badge bg-light text-dark">Working</span>
-                </div>
-                <div class="card-body">
-                    <div class="input-group">
-                        <input type="text" id="jsInput" class="form-control" placeholder='Try: javascript:alert("Injected")'>
-                        <button class="btn btn-danger" onclick="executeJS()">Execute</button>
-                    </div>
-                    <div id="jsOutput" class="mt-2 p-2 bg-light"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ===== PRODUCTS ===== -->
-    <div class="row" id="productList"></div>
-
-    <!-- ===== CART with Price Manipulation ===== -->
+    <!-- Business Logic Vulnerabilities Section -->
     <div class="row mt-4">
-        <div class="col-md-7">
-            <div class="card vulnerable">
-                <div class="card-header bg-warning">
-                    <strong>Cart</strong>
-                    <span class="badge bg-dark">IDOR</span>
-                    <span class="badge bg-dark">Price Manipulation</span>
-                </div>
-                <div class="card-body" id="cartContainer">
-                    <div class="text-muted">Cart is empty</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-5">
-            <div class="card vulnerable">
-                <div class="card-header bg-warning">
-                    <strong>Checkout</strong>
-                    <span class="badge bg-dark">Data Leak</span>
-                    <span class="badge bg-dark">No CSRF</span>
+        <div class="col-12">
+            <div class="business-card">
+                <div class="card-header">
+                    <small><strong>Business Logic Vulnerabilities (Active Exploits)</strong></small>
+                    <span class="badge bg-light text-dark ms-2">5 Active</span>
                 </div>
                 <div class="card-body">
-                    <div class="mb-2">
-                        <label class="form-label small">Name</label>
-                        <input type="text" id="checkoutName" class="form-control" value="John Doe">
+                    <div class="row g-2">
+                        <div class="col-md-3 col-6">
+                            <button class="btn btn-sm btn-outline-danger w-100" onclick="adjustQuantity(1, -1)">
+                                <i class="bi bi-dash-circle"></i> Neg Qty
+                            </button>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <button class="btn btn-sm btn-outline-danger w-100" onclick="applyCouponMultiple(5)">
+                                <i class="bi bi-ticket"></i> Coupon x5
+                            </button>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <button class="btn btn-sm btn-outline-danger w-100" onclick="manipulateGiftCard(99999)">
+                                <i class="bi bi-gift"></i> Hack Gift Card
+                            </button>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <button class="btn btn-sm btn-outline-danger w-100" onclick="document.getElementById('freeShippingCheck').click(); toggleFreeShipping();">
+                                <i class="bi bi-truck"></i> Free Shipping
+                            </button>
+                        </div>
                     </div>
-                    <div class="mb-2">
-                        <label class="form-label small">Address</label>
-                        <input type="text" id="checkoutAddress" class="form-control" value="123 Main St">
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label small">Credit Card</label>
-                        <input type="text" id="checkoutCard" class="form-control" value="4111-1111-1111-1111">
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label small">Discount Code</label>
-                        <input type="text" id="discountCode" class="form-control" value="SAVE10">
-                    </div>
-                    <button class="btn btn-success w-100" onclick="checkout()">Place Order (GET)</button>
-                    <div id="checkoutResult" class="mt-2 small"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ===== OPEN REDIRECT ===== -->
-    <div class="row mt-3">
-        <div class="col-md-6">
-            <div class="card vulnerable">
-                <div class="card-header bg-info text-white">
-                    Open Redirect
-                    <span class="badge bg-light text-dark">Working</span>
-                </div>
-                <div class="card-body">
-                    <div class="input-group">
-                        <input type="text" id="redirectUrl" class="form-control" value="https://example.com">
-                        <button class="btn btn-info" onclick="redirectTo()">Redirect</button>
-                    </div>
-                    <small>Try: https://malicious-site.com</small>
-                    <div id="redirectStatus" class="mt-2"></div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card vulnerable">
-                <div class="card-header bg-info text-white">
-                    Session Fixation
-                    <span class="badge bg-light text-dark">Working</span>
-                </div>
-                <div class="card-body">
-                    <div class="input-group">
-                        <input type="text" id="sessionInput" class="form-control" value="admin123">
-                        <button class="btn btn-info" onclick="setSession()">Set Session</button>
-                    </div>
-                    <div id="sessionDisplay" class="mt-2 p-2 bg-light">Current Session: <span id="currentSession">None</span></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ===== CSRF Demonstration ===== -->
-    <div class="row mt-3">
-        <div class="col-md-6">
-            <div class="card vulnerable">
-                <div class="card-header bg-secondary text-white">
-                    CSRF Vulnerability
-                    <span class="badge bg-light text-dark">Working</span>
-                </div>
-                <div class="card-body">
-                    <button class="btn btn-danger" onclick="csrfAttack()">Simulate CSRF Attack</button>
-                    <div id="csrfResult" class="mt-2"></div>
-                    <small>No anti-CSRF tokens - requests can be forged</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card vulnerable">
-                <div class="card-header bg-secondary text-white">
-                    Clickjacking Demo
-                    <span class="badge bg-light text-dark">Working</span>
-                </div>
-                <div class="card-body">
-                    <button class="btn btn-danger" onclick="showClickjacking()">Show Clickjacking Test</button>
-                    <div id="clickjackingResult" class="mt-2"></div>
+                    <small class="text-muted mt-2 d-block">Add item to cart first, then exploit business logic flaws</small>
                 </div>
             </div>
         </div>
@@ -227,87 +512,97 @@
 
     <!-- Footer -->
     <div class="mt-4 text-center small text-muted border-top pt-3">
-        <span>Vulnerable Demo - All vulnerabilities verified working</span>
+        <span>Vulnerable Shopping Cart - For Educational Purposes Only</span>
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // ===== PRODUCT DATA =====
     const products = [
-        { id: 1, name: 'Wireless Headphones', price: 49.99, img: 'https://via.placeholder.com/200x140?text=Headphones' },
-        { id: 2, name: 'Bluetooth Speaker', price: 29.99, img: 'https://via.placeholder.com/200x140?text=Speaker' },
-        { id: 3, name: 'USB-C Hub', price: 19.99, img: 'https://via.placeholder.com/200x140?text=USB+Hub' },
-        { id: 4, name: 'Mechanical Keyboard', price: 79.99, img: 'https://via.placeholder.com/200x140?text=Keyboard' }
+        { id: 1, name: 'Summer T-Shirt', price: 177.00, img: 'https://via.placeholder.com/200x180/0d6efd/ffffff?text=T-Shirt' },
+        { id: 2, name: 'Warm Jacket', price: 245.00, img: 'https://via.placeholder.com/200x180/28a745/ffffff?text=Jacket' },
+        { id: 3, name: 'Leather Belt', price: 59.00, img: 'https://via.placeholder.com/200x180/fd7e14/ffffff?text=Belt' },
+        { id: 4, name: 'Winter Gloves', price: 39.99, img: 'https://via.placeholder.com/200x180/dc3545/ffffff?text=Gloves' },
+        { id: 5, name: 'Wool Scarf', price: 45.00, img: 'https://via.placeholder.com/200x180/6f42c1/ffffff?text=Scarf' },
+        { id: 6, name: 'Running Shoes', price: 129.99, img: 'https://via.placeholder.com/200x180/20c997/ffffff?text=Shoes' }
     ];
 
     // ===== STATE =====
     let cart = JSON.parse(localStorage.getItem('vulnCart')) || [];
     let sessionId = localStorage.getItem('sessionId') || 'guest_' + Date.now();
+    let giftCardBalance = parseFloat(localStorage.getItem('giftCardBalance')) || 100;
+    let loyaltyPoints = parseInt(localStorage.getItem('loyaltyPoints')) || 0;
+    let appliedCoupons = JSON.parse(localStorage.getItem('appliedCoupons')) || [];
+    let shippingCost = parseFloat(localStorage.getItem('shippingCost')) || 10;
 
-    // ===== XSS VECTOR 1: Reflected XSS =====
-    function searchProducts() {
-        const query = document.getElementById('searchInput').value;
-        const resultsDiv = document.getElementById('searchResults');
+    // ===== CHECKOUT WITH DATA LEAK =====
+    function checkout() {
+        const name = document.getElementById('checkoutName')?.value || 'John Doe';
+        const address = document.getElementById('checkoutAddress')?.value || '123 Main St';
+        const card = document.getElementById('checkoutCard')?.value || '4111-1111-1111-1111';
+        const discount = document.getElementById('discountCode')?.value || '';
+        const total = document.getElementById('cartTotal') ? document.getElementById('cartTotal').value : 0;
         
-        // VULNERABLE: Direct innerHTML assignment
-        resultsDiv.innerHTML = `<strong>Search results for:</strong> ${query}`;
+        const params = new URLSearchParams({
+            name, address, card, discount, total,
+            session: sessionId,
+            giftCardBalance: giftCardBalance,
+            loyaltyPoints: loyaltyPoints,
+            appliedCoupons: appliedCoupons.length,
+            timestamp: Date.now()
+        });
         
-        // Show product matches
-        const matches = products.filter(p => p.name.toLowerCase().includes(query.toLowerCase()));
-        if (matches.length > 0) {
-            resultsDiv.innerHTML += `<br>Found ${matches.length} products`;
-        } else {
-            resultsDiv.innerHTML += `<br>No products found`;
-        }
+        console.log('Checkout Data (LEAKED):', params.toString());
         
-        // Log for testing
-        console.log('Search executed with: ' + query);
+        document.getElementById('checkoutResult').innerHTML = `
+            <div class="alert alert-danger mt-2">
+                <strong>Order placed with data (exposed):</strong><br>
+                <small class="text-break">${params.toString()}</small>
+            </div>
+        `;
+        
+        alert('Order placed! Check console for leaked data.');
     }
 
-    // ===== XSS VECTOR 2: Stored XSS =====
-    function addReview() {
-        const input = document.getElementById('reviewInput');
-        const container = document.getElementById('reviewsContainer');
-        const reviewText = input.value;
+    // ===== DOM XSS via URL Parameter =====
+    function checkDomXss() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const xssParam = urlParams.get('xss');
+        const displayDiv = document.getElementById('domXssDisplay');
         
-        if (!reviewText.trim()) return;
-        
-        // VULNERABLE: Direct innerHTML injection
-        container.innerHTML += `<div class="border-bottom pb-2 mb-2"><strong>User:</strong> ${reviewText}</div>`;
-        
-        // Store in localStorage
-        const reviews = JSON.parse(localStorage.getItem('reviews')) || [];
-        reviews.push(reviewText);
-        localStorage.setItem('reviews', JSON.stringify(reviews));
-        
-        input.value = '';
-        console.log('Review added: ' + reviewText);
-    }
-
-    // ===== XSS VECTOR 3: DOM XSS via URL Hash =====
-    function loadHashXSS() {
-        const hash = window.location.hash;
-        const display = document.getElementById('hashDisplay');
-        
-        if (hash && hash.length > 1) {
-            // VULNERABLE: Direct injection from URL
-            display.innerHTML = `<strong>Hash parameter:</strong> ${hash.substring(1)}`;
-        } else {
-            display.innerHTML = '<em>No hash parameter</em>';
+        if (xssParam) {
+            displayDiv.style.display = 'block';
+            displayDiv.innerHTML = `<strong>XSS Parameter:</strong> ${xssParam}`;
+            console.log('DOM XSS triggered with: ' + xssParam);
+            console.warn('DOM XSS Vulnerability: URL parameter injected directly!');
         }
     }
 
-    // ===== XSS VECTOR 4: JavaScript Injection =====
-    function executeJS() {
-        const input = document.getElementById('jsInput').value;
-        const output = document.getElementById('jsOutput');
+    // ===== OPEN REDIRECT =====
+    function checkOpenRedirect() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirectUrl = urlParams.get('redirectto');
         
-        // VULNERABLE: eval() execution
-        try {
-            const result = eval(input);
-            output.innerHTML = `<strong>Result:</strong> ${result}`;
-        } catch(e) {
-            output.innerHTML = `<strong>Error:</strong> ${e.message}`;
+        if (redirectUrl) {
+            console.log('Open Redirect triggered to: ' + redirectUrl);
+            console.warn('Open Redirect Vulnerability: Unvalidated redirect to ' + redirectUrl);
+            setTimeout(() => {
+                window.location.href = redirectUrl;
+            }, 1500);
+        }
+    }
+
+    // ===== SESSION FIXATION =====
+    function checkSessionFixation() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionParam = urlParams.get('session');
+        
+        if (sessionParam) {
+            localStorage.setItem('sessionId', sessionParam);
+            sessionId = sessionParam;
+            console.log('Session fixed via URL parameter to: ' + sessionParam);
+            console.warn('Session Fixation Vulnerability: Session can be set via URL!');
         }
     }
 
@@ -315,14 +610,14 @@
     function renderProducts() {
         const container = document.getElementById('productList');
         container.innerHTML = products.map(p => `
-            <div class="col-md-3 col-6 mb-3">
+            <div class="col-md-4 col-6 mb-3">
                 <div class="card h-100">
                     <img src="${p.img}" class="card-img-top product-img" alt="${p.name}">
                     <div class="card-body p-2">
-                        <h6 class="card-title">${p.name}</h6>
-                        <p class="card-text text-success fw-bold">$${p.price}</p>
+                        <h6 class="card-title mb-0">${p.name}</h6>
+                        <p class="card-text text-primary fw-bold mb-1">$${p.price.toFixed(2)}</p>
                         <button class="btn btn-sm btn-outline-primary w-100" onclick="addToCart(${p.id}, '${p.name}', ${p.price})">
-                            Add to Cart
+                            <i class="bi bi-cart-plus"></i> Add to Cart
                         </button>
                     </div>
                 </div>
@@ -332,7 +627,6 @@
 
     // ===== CART FUNCTIONS =====
     function addToCart(id, name, price) {
-        // VULNERABLE: Client-side price manipulation possible
         const item = cart.find(i => i.id === id);
         if (item) {
             item.quantity = (item.quantity || 1) + 1;
@@ -342,15 +636,20 @@
         localStorage.setItem('vulnCart', JSON.stringify(cart));
         renderCart();
         updateCartCount();
-        
-        // XSS possibility via product name
-        document.getElementById('searchResults').innerHTML = `<span class="text-success">Added "${name}"</span>`;
     }
 
     function renderCart() {
-        const container = document.getElementById('cartContainer');
+        const tbody = document.getElementById('cartBody');
         if (!cart.length) {
-            container.innerHTML = '<div class="text-muted">Cart is empty</div>';
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-4">
+                        <i class="bi bi-cart3" style="font-size: 30px; display: block; margin-bottom: 10px;"></i>
+                        Your cart is empty
+                    </td>
+                </tr>
+            `;
+            updateTotals(0);
             return;
         }
         
@@ -360,23 +659,47 @@
             const subtotal = item.price * item.quantity;
             total += subtotal;
             html += `
-                <div class="cart-item d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>${item.name}</strong>
-                        <span class="badge bg-secondary">$${item.price}</span>
-                        <span class="badge bg-light">x${item.quantity}</span>
-                    </div>
-                    <div>
-                        <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart(${index})">×</button>
-                        <span class="ms-2">$${subtotal.toFixed(2)}</span>
-                    </div>
-                </div>
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div>
+                                <div class="product-name">${item.name}</div>
+                                <button class="remove-btn" onclick="removeFromCart(${index})">
+                                    <i class="bi bi-x-circle"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="product-price">$${item.price.toFixed(2)}</td>
+                    <td>
+                        <div class="quantity-control">
+                            <button onclick="adjustQuantity(${item.id}, -1)">−</button>
+                            <input type="number" value="${item.quantity}" readonly>
+                            <button onclick="adjustQuantity(${item.id}, 1)">+</button>
+                        </div>
+                    </td>
+                    <td class="text-end fw-bold">$${subtotal.toFixed(2)}</td>
+                </tr>
             `;
         });
         
-        html += `<div class="mt-2 fw-bold">Total: $${total.toFixed(2)}</div>`;
-        html += `<input type="hidden" id="cartTotal" value="${total}">`;
-        container.innerHTML = html;
+        tbody.innerHTML = html;
+        document.getElementById('cartTotal').value = total;
+        updateTotals(total);
+    }
+
+    function updateTotals(total) {
+        const shipping = shippingCost || 0;
+        // Apply coupon discounts
+        let discountedTotal = total;
+        for(let i = 0; i < appliedCoupons.length; i++) {
+            discountedTotal = discountedTotal * 0.8; // 20% each
+        }
+        const finalTotal = discountedTotal + shipping;
+        document.getElementById('cartSubtotal').innerText = discountedTotal.toFixed(2);
+        document.getElementById('cartShipping').innerText = shipping.toFixed(2);
+        document.getElementById('cartTotalDisplay').innerText = finalTotal.toFixed(2);
+        document.getElementById('cartTotal').value = discountedTotal;
     }
 
     function removeFromCart(index) {
@@ -398,105 +721,152 @@
         document.getElementById('cartCount').innerText = count;
     }
 
-    // ===== OPEN REDIRECT =====
-    function redirectTo() {
-        const url = document.getElementById('redirectUrl').value;
-        const status = document.getElementById('redirectStatus');
+    // ===== BUSINESS LOGIC VULNERABILITY 1: QUANTITY MANIPULATION =====
+    function adjustQuantity(productId, change) {
+        const item = cart.find(i => i.id === productId);
+        if (!item) {
+            alert('Add item to cart first!');
+            return;
+        }
+        // VULNERABLE: No validation for negative quantities
+        item.quantity += change;
+        if (item.quantity < 0) item.quantity = -100;
+        localStorage.setItem('vulnCart', JSON.stringify(cart));
+        renderCart();
+        updateCartCount();
+        console.warn('Quantity Manipulation: ' + item.name + ' quantity set to ' + item.quantity);
+    }
+
+    // ===== BUSINESS LOGIC VULNERABILITY 2: COUPON REUSE =====
+    function applyCouponReuse() {
+        const code = document.getElementById('couponInput').value;
+        if (!code.trim()) return;
         
-        // VULNERABLE: Unvalidated redirect
-        if (url) {
-            status.innerHTML = `<div class="alert alert-warning">Redirecting to: ${url}</div>`;
-            setTimeout(() => {
-                window.location.href = url;
-            }, 1000);
+        appliedCoupons.push(code);
+        localStorage.setItem('appliedCoupons', JSON.stringify(appliedCoupons));
+        
+        let total = parseFloat(document.getElementById('cartTotal').value) || 0;
+        document.getElementById('couponStatus').innerHTML = 
+            `Coupon applied ${appliedCoupons.length} times! ${appliedCoupons.length * 20}% total discount`;
+        renderCart();
+        console.warn('Coupon Reuse: Applied ' + appliedCoupons.length + ' times');
+    }
+
+    function applyCouponMultiple(times) {
+        for(let i = 0; i < times; i++) {
+            applyCouponReuse();
         }
     }
 
-    // ===== SESSION FIXATION =====
-    function setSession() {
-        const session = document.getElementById('sessionInput').value;
-        localStorage.setItem('sessionId', session);
-        sessionId = session;
-        document.getElementById('currentSession').innerText = session;
-        document.getElementById('sessionDisplay').innerHTML = 
-            `<strong>Session set to:</strong> ${session} <span class="badge bg-warning">Fixed</span>`;
+    // ===== BUSINESS LOGIC VULNERABILITY 3: GIFT CARD MANIPULATION =====
+    function applyGiftCard() {
+        const amount = parseFloat(document.getElementById('giftCardAmount').value) || 0;
         
-        console.log('Session fixed to: ' + session);
+        if (amount > giftCardBalance) {
+            document.getElementById('giftCardStatus').innerHTML = 
+                '<span class="text-danger">Insufficient balance</span>';
+            return;
+        }
+        
+        giftCardBalance -= amount;
+        localStorage.setItem('giftCardBalance', giftCardBalance);
+        
+        let total = parseFloat(document.getElementById('cartTotal').value) || 0;
+        total -= amount;
+        document.getElementById('cartTotal').value = total;
+        updateTotals(total);
+        
+        document.getElementById('giftCardStatus').innerHTML = 
+            `<span class="text-success">Applied $${amount.toFixed(2)}. Remaining: $${giftCardBalance.toFixed(2)}</span>`;
+        updateGiftCardDisplay();
+        renderCart();
+        console.warn('Gift Card Applied: $' + amount);
     }
 
-    // ===== CHECKOUT WITH DATA LEAK =====
-    function checkout() {
-        const name = document.getElementById('checkoutName').value;
-        const address = document.getElementById('checkoutAddress').value;
-        const card = document.getElementById('checkoutCard').value;
-        const discount = document.getElementById('discountCode').value;
-        const total = document.getElementById('cartTotal') ? document.getElementById('cartTotal').value : 0;
-        
-        // VULNERABLE: Data sent via GET (visible in URL)
-        const params = new URLSearchParams({
-            name, address, card, discount, total,
-            session: sessionId,
-            timestamp: Date.now()
-        });
-        
-        // VULNERABLE: Data exposed in console
-        console.log('Checkout Data (LEAKED):', params.toString());
-        
-        // VULNERABLE: Data exposed in DOM
-        document.getElementById('checkoutResult').innerHTML = `
-            <div class="alert alert-danger">
-                <strong>Order placed with data (exposed):</strong><br>
-                <small class="text-break">${params.toString()}</small>
-            </div>
-        `;
-        
-        // VULNERABLE: Data in URL
-        window.history.pushState({}, '', '?' + params.toString());
-        
-        alert('Order placed! Check console for leaked data.');
+    function manipulateGiftCard(amount) {
+        giftCardBalance = amount;
+        localStorage.setItem('giftCardBalance', amount);
+        updateGiftCardDisplay();
+        document.getElementById('giftCardStatus').innerHTML = 
+            `<span class="text-danger">Gift card hacked to $${amount.toFixed(2)}!</span>`;
+        console.warn('Gift Card Manipulated to: $' + amount);
     }
 
-    // ===== CSRF ATTACK SIMULATION =====
+    function updateGiftCardDisplay() {
+        document.getElementById('giftCardBalanceDisplay').innerText = giftCardBalance.toFixed(2);
+    }
+
+    // ===== BUSINESS LOGIC VULNERABILITY 4: FREE SHIPPING BYPASS =====
+    function toggleFreeShipping() {
+        const checked = document.getElementById('freeShippingCheck').checked;
+        
+        if (checked) {
+            shippingCost = 0;
+            document.getElementById('shippingDisplay').innerHTML = 
+                '<span class="text-success">Free Shipping Applied!</span>';
+            console.warn('Free Shipping Bypass: Applied without minimum order');
+        } else {
+            shippingCost = 10;
+            document.getElementById('shippingDisplay').innerHTML = '';
+        }
+        
+        localStorage.setItem('shippingCost', shippingCost);
+        renderCart();
+    }
+
+    // ===== BUSINESS LOGIC VULNERABILITY 5: LOYALTY POINTS =====
+    function redeemPoints() {
+        const pointsToRedeem = parseInt(prompt('Enter points to redeem (100 points = $1):', '1000'));
+        if (!pointsToRedeem || pointsToRedeem <= 0) return;
+        
+        const discount = pointsToRedeem / 100;
+        let total = parseFloat(document.getElementById('cartTotal').value) || 0;
+        
+        total -= discount;
+        document.getElementById('cartTotal').value = total;
+        loyaltyPoints -= pointsToRedeem;
+        localStorage.setItem('loyaltyPoints', loyaltyPoints);
+        
+        updateTotals(total);
+        updatePointsDisplay();
+        renderCart();
+        document.getElementById('pointsStatus').innerHTML = 
+            `<span class="text-success">Redeemed ${pointsToRedeem} points for $${discount.toFixed(2)} discount!</span>`;
+        console.warn('Points Redeemed: ' + pointsToRedeem);
+    }
+
+    function manipulatePoints(newPoints) {
+        loyaltyPoints = newPoints;
+        localStorage.setItem('loyaltyPoints', newPoints);
+        updatePointsDisplay();
+        document.getElementById('pointsStatus').innerHTML = 
+            `<span class="text-danger">Points hacked to ${newPoints}!</span>`;
+        console.warn('Loyalty Points Manipulated to: ' + newPoints);
+    }
+
+    function updatePointsDisplay() {
+        document.getElementById('loyaltyPointsDisplay').innerText = loyaltyPoints;
+    }
+
+    // ===== CSRF ATTACK =====
     function csrfAttack() {
-        const result = document.getElementById('csrfResult');
-        
-        // VULNERABLE: No CSRF token validation
         const payload = {
             name: 'Hacker',
             address: 'Evil Street 123',
             card: '1234-5678-9012-3456',
             total: '0.01'
         };
-        
-        // Simulate cross-origin request
-        result.innerHTML = `
-            <div class="alert alert-danger">
-                <strong>CSRF Attack Successful!</strong><br>
-                Attacker forged request with data:<br>
-                <small>${JSON.stringify(payload)}</small><br><br>
-                <span class="text-danger">No CSRF token was validated!</span>
-            </div>
-        `;
-        
         console.log('CSRF Attack: Forged request sent', payload);
+        return payload;
     }
 
     // ===== CLICKJACKING DEMO =====
     function showClickjacking() {
-        const result = document.getElementById('clickjackingResult');
-        
-        // Create iframe for demonstration
-        result.innerHTML = `
-            <div class="alert alert-danger">
-                <strong>Clickjacking Vulnerability!</strong><br>
-                This page can be embedded in an iframe:<br>
-                <iframe src="${window.location.href}" style="width:100%;height:200px;border:2px solid red;"></iframe>
-                <br><span class="text-danger">No X-Frame-Options header set!</span>
-            </div>
-        `;
+        console.log('Clickjacking Vulnerability: Page can be embedded in iframe');
+        return true;
     }
 
-    // ===== RATE LIMITING TEST =====
+    // ===== RATE LIMITING =====
     function spamCart() {
         for(let i = 0; i < 50; i++) {
             addToCart(1, 'Spam Item', 0.01);
@@ -506,98 +876,49 @@
 
     // ===== INITIALIZATION =====
     function init() {
+        checkOpenRedirect();
+        checkSessionFixation();
         renderProducts();
         renderCart();
         updateCartCount();
-        loadHashXSS();
+        checkDomXss();
+        updateGiftCardDisplay();
+        updatePointsDisplay();
         
-        // Set session display
-        document.getElementById('currentSession').innerText = sessionId;
-        
-        // Load stored reviews
-        const reviews = JSON.parse(localStorage.getItem('reviews')) || [];
-        if (reviews.length > 0) {
-            const container = document.getElementById('reviewsContainer');
-            reviews.forEach(review => {
-                container.innerHTML += `<div class="border-bottom pb-2 mb-2"><strong>User:</strong> ${review}</div>`;
-            });
-        }
-        
-        // Log vulnerabilities
-        console.log('%c🔥 Vulnerable Shop Loaded', 'color: red; font-size: 20px; font-weight: bold;');
+        console.log('%cVulnerable Shopping Cart Loaded', 'color: red; font-size: 20px; font-weight: bold;');
         console.log('%cVulnerabilities Active:', 'color: orange; font-size: 16px;');
-        console.log('1. Reflected XSS (Search)');
-        console.log('2. Stored XSS (Reviews)');
-        console.log('3. DOM XSS (URL Hash)');
-        console.log('4. JavaScript Injection (eval)');
-        console.log('5. IDOR (Cart access)');
-        console.log('6. Price Manipulation');
-        console.log('7. Open Redirect');
-        console.log('8. Session Fixation');
-        console.log('9. Data Exposure');
-        console.log('10. CSRF');
-        console.log('11. Clickjacking');
-        console.log('12. No CSP');
-        console.log('13. No Rate Limiting');
+        console.log('1. DOM XSS - ?xss=<img src=x onerror=alert(1)>');
+        console.log('2. Open Redirect - ?redirectto=https://example.com');
+        console.log('3. Session Fixation - ?session=admin123');
+        console.log('4. Price Manipulation - Negative quantities');
+        console.log('5. Coupon Reuse - Apply coupon multiple times');
+        console.log('6. Gift Card Manipulation - Client-side balance');
+        console.log('7. Free Shipping Bypass - No minimum order');
+        console.log('8. Loyalty Points - Inflate points');
+        console.log('9. Data Leak - Checkout exposes data');
+        console.log('10. CSRF - No tokens');
+        console.log('11. Clickjacking - No X-Frame-Options');
+        console.log('12. No Rate Limiting - Spam requests');
         
-        console.log('%cSession ID: ' + sessionId, 'color: blue;');
-        console.log('%cCart Data: ' + JSON.stringify(cart), 'color: green;');
-        
-        // Expose for easy testing
         window.vuln = {
             cart: cart,
             session: sessionId,
             products: products,
             addToCart: addToCart,
             clearCart: clearCart,
-            searchProducts: searchProducts,
-            addReview: addReview,
-            executeJS: executeJS,
-            redirectTo: redirectTo,
             checkout: checkout,
-            csrfAttack: csrfAttack
+            csrfAttack: csrfAttack,
+            showClickjacking: showClickjacking,
+            adjustQuantity: adjustQuantity,
+            applyCouponReuse: applyCouponReuse,
+            manipulateGiftCard: manipulateGiftCard,
+            manipulatePoints: manipulatePoints
         };
     }
 
-    // ===== ADDITIONAL VULNERABILITIES =====
-
-    // 1. No CSP - eval works
-    console.log('No Content Security Policy - eval() works');
-
-    // 2. No X-Frame-Options - clickjacking possible
-    // 3. Global variables exposure
-    window.cartData = cart;
-    window.userData = { session: sessionId };
-
-    // 4. Information disclosure via error messages
-    function triggerError() {
-        try {
-            null.toString(); // This will throw
-        } catch(e) {
-            // VULNERABLE: Full error stack exposed
-            document.getElementById('searchResults').innerHTML = 
-                `<div class="alert alert-danger">Error: ${e.stack}</div>`;
-        }
-    }
-
-    // 5. Insecure storage - all data in localStorage
-    console.log('All data stored in plaintext localStorage');
-
-    // 6. No input validation
-    // 7. Predictable IDs
-    // 8. Missing authentication
-
-    // Load on page ready
     document.addEventListener('DOMContentLoaded', init);
-    
-    // Listen for hash changes for DOM XSS
-    window.addEventListener('hashchange', loadHashXSS);
-
-    // Expose spam function for testing
     window.spamCart = spamCart;
-    window.triggerError = triggerError;
-
-    console.log('%c✅ Ready for testing! All vulnerabilities active.', 'color: green; font-size: 14px;');
+    console.log('Ready for testing! All vulnerabilities active.');
 </script>
 </body>
 </html>
